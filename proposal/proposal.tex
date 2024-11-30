@@ -1,0 +1,27 @@
+\documentclass[12pt]{article} % 11pt font
+% 1in margins
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[numbers]{natbib}
+
+\title{The Lanczos Algorithm in Quantum Chemistry}
+\author{Patryk Kozlowski and Hamlin Wu}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section{Quantum Chemistry and Subspace Methods}
+The field of quantum chemistry leverages insights from the underlying quantum physics to design efficient simulations of atomistic systems. This gives an intuitive high-level picture for the purpose of the field, but the real, day-to-day work of quantum chemists is in making improvements to existing algorithms in order to make better use of these physical insights. A concrete example of this is the Davidson algorithm, which uses an ever increasing subspace of "trial" eigenvectors in order to efficiently find the lowest eigenvalues of a large, sparse, Hermitian matrix. At first, this diagonalization problem may seem intractable due to the large system size, but we know that it is Hermitian and, furthermore, sparse, because of physical insight on the system, allowing one to exploit the Davidson method.
+\subsection{Using Lanczos To Efficiently Determine the Self Energy}
+The $GW$ approximation serves as the gap-filling method in quantum chemistry; it improves upon the accuracy of mean-field methods, but not at the steep computational cost of correlated wave function-based methods. The self-energy is the central quantity in a $GW$ calculation, as it captures the effects of electron-electron interactions that are not accounted for in mean-field methods. However, this self-energy has a complicated pole structure, which one must deal with, at the expense of computational performance. However, recently in the literature, a formalism has been proposed based on the conserving moments of the self-energy \cite{scott2023moment}, which eliminates the need to deal with the poles of the self-energy. In support of this physical simplification is an efficient implementation, which makes use of the Lanczos algorithm, in order to determine the desired eigenvalues of the Hamiltonian matrix. We propose to investigate the use of the Lanczos algorithm in this context, paying special attention to the low-rank approximations made along the way in the method. Understanding how to avoid the poles of the self-energy and nurture by taking advantage of these self-energy moments will be critical in order to found a new closure to Hedin's equations based on the generalized quantum master equation of the many-body theory, long known in statistical physics, but only recently explored in quantum chemistry.
+
+\bibliographystyle{plainnat}
+\bibliography{citations.bib}
+
+\end{document}

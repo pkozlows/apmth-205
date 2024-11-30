@@ -1,0 +1,13 @@
+\begin{thebibliography}{1}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Scott et~al.(2023)Scott, Backhouse, and Booth]{scott2023moment}
+Charles~JC Scott, Oliver~J Backhouse, and George~H Booth.
+\newblock A “moment-conserving” reformulation of gw theory.
+\newblock \emph{The Journal of chemical physics}, 158\penalty0 (12), 2023.
+
+\end{thebibliography}
