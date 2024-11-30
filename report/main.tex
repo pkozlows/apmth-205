@@ -1,0 +1,78 @@
+\documentclass[12pt]{article} % 11pt font
+% 1in margins
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage[numbers]{natbib}
+
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\title{The Lanczos Algorithm in Quantum Chemistry}
+\author{Patryk Kozlowski and Hamlin Wu}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section{Exposition}
+\subsection{Krylov Subspace}
+\subsection{Arnoldi Iteration}
+\subsection{Lanczos Iteration}
+\subsection{Block Lanczos}
+\section{Application in Moment-Conserving $GW$}
+\subsection{Motivation}
+In the $GW$ approximation, one solves for the interacting Green's function $G$ via the Dyson equation, which relates it to the non-interacting Green's function $G_0$ and the self-energy $\Sigma$, as $G=G_0+G_0\Sigma G=\left[G_0^{-1}-\Sigma\right]^{-1}$. Since $G_0$ is known from a prior mean-field calculation, we are left to determine the self-energy $\Sigma$. In frequency space, the self-energy can be further broken up as $\Sigma(\omega)=\Sigma_{\infty}+\Sigma^{\text{corr}}(\omega)$, where $\Sigma_{\infty}$ and $\Sigma^{\text{corr}}(\omega)$ are the static and dynamic components of the self-energy, respectively. Classically, $\Sigma^{\text{corr}}(\omega)$ is determined as the convolution of the non-interacting Green's function $G_0$ with the screened Coulomb interaction $W$. However, this formulation becomes problematic in frequency space where both $G_0$ and $W$ have multiple poles. Therefore, to determine $\Sigma^{\text{corr}}(\omega)$ we must perform the integral $\Sigma^{\text{corr}}(\omega)=\int d\omega' e^{i\eta \omega'} G_0(\omega + \omega')W(\omega')$, but since the integrand has a complicated pole structure, we must introduce the exponential factor $e^{i\eta \omega'}$ and evaluate the resulting contour integral using Cauchy's residue theorem. However, having to evaluate these residues leads to unfavorable computational scaling. An alternative approach is to consider the moment-conserving self-energy moments, which enable one to construct a Hamiltonian matrix for this system as 
+\begin{equation}
+    \tilde{\mathbf{H}}=\left[\begin{array}{cc}
+\mathbf{f}+\boldsymbol{\Sigma}_{\infty} & \tilde{\mathbf{W}} \\
+\tilde{\mathbf{W}}^{\dagger} & \tilde{\mathbf{d}}
+\end{array}\right],
+\end{equation}
+If one can diagonalize this matrix, the rewards are plentiful; the eigenvalues are the charged excitation energies, while the eigenvectors are the quasiparticle Dyson orbitals. However, the matrix $\tilde{\mathbf{H}}$ is large, coupling a small physical space in $\mathbf{f}+\Sigma_{\infty}$ with a large auxiliary space in $\tilde{\mathbf{d}}$ through $\tilde{\mathbf{W}}$. In particular, we know that these quantities are given as
+\begin{gather}
+\mathbf{W}_{p, k v}=\sum_{i a}(p k \mid i a)\left(X_{i a}^{v}+Y_{i a}^{v}\right),  \\
+\mathbf{d}_{k v, l v^{\prime}}=\left(\epsilon_{k}-\Omega_{v}\right) \delta_{k, l} \delta_{v, v^{\prime}}
+\end{gather}
+where $X_{ia}^v$ and $Y_{ia}^v$ are excitation and deexcitation vectors, respectively, and $\Omega _v$ is the excitation energy from diagonalizing the Casida equation of TDDFT, a process that admits a steep scaling of $O(N^6)$ that we want to avoid \emph{at all costs}. \red{I can expand on this more, but this should be sufficient if we are just concerned with the numerical analysis?} However, through the introjection of the moment-conserving self-energy moments, the above Hamiltonian matrix becomes sparse, allowing for a more efficient diagonalization with Lanczos iteration.
+\subsection{Lanczos Iteration}
+Eventually, we are hoping for a truncated block tridiagonal form of the Hamiltonian matrix, expressed as:
+
+
+\begin{align}
+\tilde{\mathbf{H}}_{\text {tri }} & =\tilde{\mathbf{q}}^{(j),\dagger}\left[\begin{array}{cc}
+\mathbf{f}+\boldsymbol{\Sigma}_{\infty} & \mathbf{W} \\
+\mathbf{W}^{\dagger} & \mathbf{d}
+\end{array}\right] \tilde{\mathbf{q}}^{(j)} \\
+& =\left[\begin{array}{cccccc}
+\mathbf{f}+\mathbf{\Sigma}_{\infty} & \mathbf{L} & & & & \mathbf{0} \\
+\mathbf{L}^{\dagger} & \mathbf{M}_{1} & \mathbf{C}_{1} & & & \\
+& \mathbf{C}_{1}^{\dagger} & \mathbf{M}_{2} & \mathbf{C}_{2} & & \\
+& & \mathbf{C}_{2}^{\dagger} & \mathbf{M}_{3} & \ddots & \\
+& & & \ddots & \ddots & \mathbf{C}_{j-1} \\
+\mathbf{0} & & & & \mathbf{C}_{j-1}^{\dagger} & \mathbf{M}_{j}
+\end{array}\right]
+\label{eq:tridiagonal}
+\end{align}
+where we define $\tilde{\mathbf{q}}^{(j)}$ as
+\begin{equation}
+    \tilde{\mathbf{q}}^{(j)}=\left[\begin{array}{cc}
+\mathbf{I} & \mathbf{0} \\
+\mathbf{0} & \mathbf{q}^{(j)}
+\end{array}\right]
+\end{equation}
+This formulation becomes exact on the level $j$ extends to the full scale of the auxiliary space, which corporate ponds to considering up to the highest moment in the moment conserving self energy expansion, but in practice we always truncate the Krylov subspace to some finite $j$. Note that the tridiagonal form never actually forces us to compute $\mathbf{W}$ or $\mathbf{d}$, as desired.
+\subsubsection{Creation of Krylov Subspace}
+Formerly, the Krylov subspace of level $j$ is given as $\mathbf{q}^{(j)}=\left[\mathbf{q}_1, \mathbf{q}_2, \cdots, \mathbf{q}_j\right]$, were the projection of the full Hamiltonian unto this subspace gives the tridiagonal form of equation \ref{eq:tridiagonal}. To start building up the subspace, we need to determine $\mathbf{q}_1$ via QR decomposition of the exact $GW$ couplings as $\mathbf{W}^\dag = \mathbf{q}_1 \mathbf{L}^\dag \rightarrow \mathbf{q}_1 = \mathbf{W}^\dag \mathbf{L}^{\dag, -1}$. $\mathbf{L}$ is defun in terms of just the 0th order self energy moment as $\mathbf{L}^\dag = \left(\boldsymbol{\Sigma ^{(0)}}\right)^{\frac{1}{2}}$. \red{We should connect this to how Lanczos is usually done in the exposition. There must be a reason why the former identity is true.} We built up the subsequent $q_i$ vectors through a three-term recurrence
+\begin{equation}
+    \mathbf{q}_{i+1} \mathbf{C}_i^{\dagger}=\left[\mathbf{d} \mathbf{q}_i-\mathbf{q}_{\mathbf{i}} \mathbf{M}_i-\mathbf{q}_{i-1} \mathbf{C}_{i-1}\right],
+\end{equation}
+where the on-diagonal blocks are defined as
+\begin{equation}
+    \mathbf{M}_i=\mathbf{q}_i^{\dagger} \mathbf{d} \mathbf{q}_i
+\end{equation}
+Noticed that to form the initial tractor $\mathbf{q}_1$ we would need $\mathbf{W}^\dag$ and to continual building of the subspace, we would need $\mathbf{d}$, so to avoid this, we need to introduce the self energy moments.
+\end{document}
